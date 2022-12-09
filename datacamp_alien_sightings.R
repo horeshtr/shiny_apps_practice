@@ -56,8 +56,29 @@ ui <- fluidPage(
 
 # Define server logic required to draw a histogram
 server <- function(input, output) {
-  output$shapes <- renderPlot({}) #number of sightings by shape
-  output$duration_table <- renderTable({}) #number of sightings by shape, min/max/median/mean duration
+  # Plot number of sightings by shape
+  output$shapes <- renderPlot({
+    data_usa %>%
+      filter(state == input$state) %>%
+      filter(input$dates[1] <= date_time & input$dates[2] >= date_time) %>%
+      ggplot(aes(x = shape, y = n)) + geom_col()
+  })
+  
+  # Function to create a data frame of sights by shape and duration metrics
+  sightings_by_duration <- function(){
+    data_usa %>%
+      group_by(shape) %>%
+      summarize(num_sightings = n(),
+                min_duration = min(duration),
+                max_duration = max(duration),
+                avg_duration = mean(duration),
+                median_duration = median(duration))
+  }
+  
+  # Output complete table of number of sightings by shape, min/max/median/mean duration
+  output$duration_table <- renderTable({
+    sightings_by_duration()
+  }) 
 }
 
 
