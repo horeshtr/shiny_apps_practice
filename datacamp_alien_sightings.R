@@ -11,8 +11,18 @@ library(shiny)
 library(ggplot2)
 library(dplyr)
 
+# Read in complete dataset
 data <- read.csv("https://query.data.world/s/pgcgsk36intv4dgunw6k5y73tl7cjc", header=TRUE, stringsAsFactors=FALSE);
 glimpse(data)
+head(data)
+
+# Clean and transform
+
+
+# Subset to only USA data
+data_usa <- data %>% filter(country == "USA")
+glimpse(data_usa)
+head(data_usa)
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
@@ -25,30 +35,19 @@ ui <- fluidPage(
         sidebarPanel(
           # CODE BELOW: One input to select a U.S. state
           # And one input to select a range of dates
-        
+          selectInput('state', 'Select a State:', choices = unique(data_usa$state)),
+          dateRangeInput('dates', 'Select a Date Range:', 
+                         min = min(data_usa$date_time),
+                         max = max(data_usa$date_time))
           ),
 
         # Show a plot of the generated distribution
-        mainPanel(
-           plotOutput("distPlot")
-        )
+        mainPanel()
     )
 )
 
 # Define server logic required to draw a histogram
-server <- function(input, output) {
-
-    output$distPlot <- renderPlot({
-        # generate bins based on input$bins from ui.R
-        x    <- faithful[, 2]
-        bins <- seq(min(x), max(x), length.out = input$bins + 1)
-
-        # draw the histogram with the specified number of bins
-        hist(x, breaks = bins, col = 'darkgray', border = 'white',
-             xlab = 'Waiting time to next eruption (in mins)',
-             main = 'Histogram of waiting times')
-    })
-}
+server <- function(input, output) {}
 
 # Run the application 
 shinyApp(ui = ui, server = server)
