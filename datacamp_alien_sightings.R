@@ -17,12 +17,21 @@ data <- read.csv("https://query.data.world/s/pgcgsk36intv4dgunw6k5y73tl7cjc", he
 glimpse(data)
 head(data)
 
-# Clean and transform
+# Clean and transform date_time
 data <- data %>% 
   mutate(
-    date_time = as.POSIXct(date_time, tz = "UTC", "%Y-%m-%dT%H:%M:%S"), 
+    date_time = as.POSIXct(date_time, tz = "UTC", "%Y-%m-%dT%H:%M:%S"),
+    date = as.Date(date_time),
+    time = format(as.POSIXct(date_time), format = "%H:%M:%S"),
     posted = as.POSIXct(posted, tz = "UTC", "%Y-%m-%dT%H:%M:%S"))
 glimpse(data)
+head(data)
+
+# Clean and transform duration
+unique(data$duration)
+
+data <- data %>%
+  
 
 # Subset to only USA data
 data_usa <- data %>% filter(country == "USA")
@@ -40,16 +49,18 @@ ui <- fluidPage(
         sidebarPanel(
           # CODE BELOW: One input to select a U.S. state
           # And one input to select a range of dates
-          selectInput('state', 'Select a State:', choices = unique(data_usa$state)),
-          dateRangeInput('dates', 'Select a Date Range:', 
-                         start = min(data_usa$date_time),
-                         end = max(data_usa$date_time))
+          selectInput("state", "Select a State:", choices = unique(data_usa$state)),
+          dateRangeInput("dates", "Select a Date Range:", 
+                         start = min(data_usa$date),
+                         end = max(data_usa$date))
           ),
 
         # Show a plot and table
         mainPanel(
-          plotOutput('shapes'),
-          tableOutput('duration_table')
+          tabsetPanel(
+            tabPanel("Plot", plotOutput("shapes")),
+            tabPanel("Table", tableOutput("duration_table"))
+          )
         )
     )
 )
@@ -59,28 +70,34 @@ server <- function(input, output) {
   # Plot number of sightings by shape
   output$shapes <- renderPlot({
     data_usa %>%
-      filter(state == input$state) %>%
-      filter(input$dates[1] <= date_time & input$dates[2] >= date_time) %>%
-      ggplot(aes(x = shape, y = n)) + geom_col()
+      filter(state == input$state,
+             date >= input$dates[1], 
+             date <= input$dates[2]
+             ) %>%
+      ggplot(aes(shape)) + 
+      geom_col() +
+      labs(
+        x = "Shape",
+        y = "Number Sighted"
+      )
   })
-  
-  # Function to create a data frame of sights by shape and duration metrics
-  sightings_by_duration <- function(){
+
+  # Output complete table of number of sightings by shape, min/max/median/mean duration
+  output$duration_table <- renderTable({
     data_usa %>%
+      filter(state == input$state,
+             date >= input$dates[1], 
+             date <= input$dates[2]
+      ) %>%
       group_by(shape) %>%
       summarize(num_sightings = n(),
                 min_duration = min(duration),
                 max_duration = max(duration),
                 avg_duration = mean(duration),
-                median_duration = median(duration))
-  }
-  
-  # Output complete table of number of sightings by shape, min/max/median/mean duration
-  output$duration_table <- renderTable({
-    sightings_by_duration()
+                median_duration = median(duration)
+                )
   }) 
 }
-
 
 # Run the application 
 shinyApp(ui = ui, server = server)
