@@ -11,6 +11,7 @@ library(shiny)
 library(ggplot2)
 library(dplyr)
 library(lubridate)
+library(stringr)
 
 # Read in complete dataset
 data <- read.csv("https://query.data.world/s/pgcgsk36intv4dgunw6k5y73tl7cjc", header=TRUE, stringsAsFactors=FALSE);
@@ -28,7 +29,18 @@ glimpse(data)
 head(data)
 
 # Clean and transform duration
+
+# Extract numeric value and format into consistent number of digits
+# Extract unit of time and format consistently
+# Align all durations into minutes ?
+
 unique(data$duration)
+head(data$duration)
+duration_num <- regmatches(data$duration, gregexpr("[[:digit:]]+", data$duration))
+duration_text <- str_trim(regmatches(data$duration, gregexpr("[[:digit:]]+",data$duration, ignore.case = TRUE), invert = TRUE))
+head(duration_num)
+head(duration_text)
+class(duration_num)
 
 data <- data %>%
   
