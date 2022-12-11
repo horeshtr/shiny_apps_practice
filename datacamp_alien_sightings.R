@@ -99,7 +99,7 @@ server <- function(input, output) {
              date <= input$dates[2]
              ) %>%
       ggplot(aes(shape)) + 
-      geom_col() +
+      geom_bar() +
       labs(
         x = "Shape",
         y = "Number Sighted"
