@@ -7,6 +7,12 @@
 #    http://shiny.rstudio.com/
 #
 
+if(!require(shiny)) install.packages("shiny", repos = "http://cran.us.r-project.org")
+if(!require(ggplot2)) install.packages("ggplot2", repos = "http://cran.us.r-project.org")
+if(!require(dplyr)) install.packages("dplyr", repos = "http://cran.us.r-project.org")
+if(!require(lubridate)) install.packages("lubridate", repos = "http://cran.us.r-project.org")
+if(!require(stringr)) install.packages("stringr", repos = "http://cran.us.r-project.org")
+
 library(shiny)
 library(ggplot2)
 library(dplyr)
@@ -14,9 +20,15 @@ library(lubridate)
 library(stringr)
 
 # Read in complete dataset
-data <- read.csv("https://query.data.world/s/pgcgsk36intv4dgunw6k5y73tl7cjc", header=TRUE, stringsAsFactors=FALSE);
+data <- read.csv(file = "https://query.data.world/s/pgcgsk36intv4dgunw6k5y73tl7cjc", 
+                 header=TRUE, stringsAsFactors=FALSE,
+                 na.strings = c("", " ")
+                 )
 glimpse(data)
 head(data)
+
+# Remove all rows with NAs
+data <- data %>% filter_all(~!is.na(.))
 
 # Clean and transform date_time
 data <- data %>% 
@@ -24,7 +36,8 @@ data <- data %>%
     date_time = as.POSIXct(date_time, tz = "UTC", "%Y-%m-%dT%H:%M:%S"),
     date = as.Date(date_time),
     time = format(as.POSIXct(date_time), format = "%H:%M:%S"),
-    posted = as.POSIXct(posted, tz = "UTC", "%Y-%m-%dT%H:%M:%S"))
+    posted = as.POSIXct(posted, tz = "UTC", "%Y-%m-%dT%H:%M:%S")
+    )
 glimpse(data)
 head(data)
 
@@ -34,15 +47,14 @@ head(data)
 # Extract unit of time and format consistently
 # Align all durations into minutes ?
 
-unique(data$duration)
-head(data$duration)
-duration_num <- regmatches(data$duration, gregexpr("[[:digit:]]+", data$duration))
-duration_text <- str_trim(regmatches(data$duration, gregexpr("[[:digit:]]+",data$duration, ignore.case = TRUE), invert = TRUE))
-head(duration_num)
-head(duration_text)
-class(duration_num)
+# unique(data$duration)
+# sample(unique(data$duration), 100, replace = FALSE)
+# 
+# time_units <- c("sec", "second", "seconds", "min", "minute", "minutes", "hour", "hours")
+# 
+# duration_num <- regmatches(data$duration, gregexpr("[[:digit:]]+", data$duration))
+# duration_text <- regmatches(data$duration, gregexpr("[[:digit:]]+",data$duration, ignore.case = TRUE), invert = TRUE)
 
-data <- data %>%
   
 
 # Subset to only USA data
@@ -103,10 +115,10 @@ server <- function(input, output) {
       ) %>%
       group_by(shape) %>%
       summarize(num_sightings = n(),
-                min_duration = min(duration),
-                max_duration = max(duration),
-                avg_duration = mean(duration),
-                median_duration = median(duration)
+                #min_duration = min(duration),
+                #max_duration = max(duration),
+                #avg_duration = mean(duration),
+                #median_duration = median(duration)
                 )
   }) 
 }
